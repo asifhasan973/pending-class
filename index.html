@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pending Classes — Global Sync</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --text: #e8eef6;
+      --muted: #b8c2cc;
+      --accent: #4da3ff;
+      --danger: #ff6b6b;
+      --card: #121821;
+      --border: #1a2432;
+      --btn: #16263b;
+      --btnBorder: #2a3b56;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text)
+    }
+
+    header {
+      padding: 12px 20px;
+      border-bottom: 1px solid #222
+    }
+
+    .wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px
+    }
+
+    input,
+    textarea,
+    select,
+    button {
+      font: inherit
+    }
+
+    input,
+    textarea {
+      background: #0a1220;
+      color: var(--text);
+      border: 1px solid #213044;
+      border-radius: 8px;
+      padding: 10px
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px
+    }
+
+    button {
+      background: var(--btn);
+      color: var(--text);
+      border: 1px solid var(--btnBorder);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: transform .02s ease
+    }
+
+    button:active {
+      transform: translateY(1px)
+    }
+
+    button[disabled] {
+      opacity: .6;
+      cursor: not-allowed
+    }
+
+    button.danger {
+      background: #3a1116;
+      border-color: #5b1e26
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap
+    }
+
+    .tab {
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: #0a1220;
+      color: var(--muted);
+      cursor: pointer
+    }
+
+    .tab.active {
+      background: var(--btn);
+      color: #fff;
+      border-color: var(--btnBorder)
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px
+    }
+
+    .video {
+      background: #0b121c;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column
+    }
+
+    .thumb img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16/9;
+      object-fit: cover
+    }
+
+    .info {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .titleline {
+      font-weight: 600;
+      line-height: 1.3
+    }
+
+    .meta {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
+    .note {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 8px
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
+    .row>*:first-child {
+      flex: 1
+    }
+
+    #recentBanner {
+      margin-top: 8px
+    }
+
+    .badge {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background: #0a1220;
+      color: var(--muted);
+      padding: 4px 8px;
+      border-radius: 999px
+    }
+
+    .ok {
+      color: #7CFC9A
+    }
+
+    .err {
+      color: #ff6b6b
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 9999
+    }
+
+    .toast {
+      background: #0f1725;
+      border: 1px solid #243146;
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      min-width: 200px;
+      max-width: 90vw;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .35)
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap" style="display:flex;gap:12px;align-items:center;justify-content:space-between">
+      <h1 style="margin:0">Pending Classes — Global Sync</h1>
+      <div id="connBadge" class="badge">Checking…</div>
+    </div>
+  </header>
+
+  <main class="wrap" role="main">
+    <section class="card" aria-labelledby="add-heading">
+      <h2 id="add-heading">Add YouTube Link</h2>
+      <div class="row">
+        <label class="sr-only" for="url">YouTube URL</label>
+        <input id="url" type="url" placeholder="Paste YouTube link" autocomplete="off" inputmode="url"
+          aria-label="YouTube URL">
+        <button id="addBtn" aria-label="Add video">Add</button>
+      </div>
+      <div style="margin-top:10px">
+        <label for="bulkUrls">Bulk Upload (one URL per line)</label>
+        <textarea id="bulkUrls" placeholder="Paste multiple YouTube URLs, one per line"
+          style="min-height: 80px;"></textarea>
+        <div class="row" style="margin-top:8px;">
+          <button id="bulkAddBtn" aria-label="Add multiple videos">Add All</button>
+          <button id="clearBulkBtn" aria-label="Clear bulk input">Clear</button>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <label for="sortSelect">Sort by</label>
+        <select id="sortSelect" aria-label="Sort videos">
+          <option value="publishedAt-desc">Upload date (new→old)</option>
+          <option value="publishedAt-asc">Upload date (old→new)</option>
+          <option value="addedAt-desc">Added time (new→old)</option>
+          <option value="addedAt-asc">Added time (old→new)</option>
+        </select>
+        <div id="recentBanner" class="note" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="list-heading">
+      <h2 id="list-heading" class="sr-only">Video List</h2>
+      <div id="tabs" class="tabs" role="tablist" aria-label="Subjects"></div>
+      <div id="list" class="grid"></div>
+      <div id="empty" class="card" style="text-align:center">No videos yet.</div>
+    </section>
+
+    <section class="card" aria-labelledby="sync-heading">
+      <h2 id="sync-heading">Manual Sync</h2>
+      <p class="note">Copy from one device, paste into another (still works even if backend is offline).</p>
+
+      <label for="exportBox">Export (read-only)</label>
+      <textarea id="exportBox" readonly spellcheck="false" aria-label="Exported JSON"></textarea><br>
+      <div class="row">
+        <button id="refreshBtn">Refresh</button>
+        <button id="copyBtn">Copy</button>
+      </div>
+
+      <hr>
+
+      <label for="importBox">Import / Merge</label>
+      <textarea id="importBox" placeholder="Paste JSON here" spellcheck="false" aria-label="Import JSON"></textarea><br>
+      <div class="row">
+        <button id="importBtn">Import & Replace</button>
+        <button id="mergeBtn">Merge</button>
+        <button id="clearBtn" class="danger">Clear All</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    /* ========== Prefs & constants ========== */
+    const PREFS_KEY = 'pendingClasses.prefs.v3';
+    const DEFAULT_PREFS = { sort: 'publishedAt-desc', currentSubject: 'ALL' };
+
+    /* ========== Tiny helpers ========== */
+    const toast = (msg) => {
+      const c = document.getElementById('toast');
+      const t = document.createElement('div');
+      t.className = 'toast'; t.textContent = msg;
+      c.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; }, 1600);
+      setTimeout(() => { t.remove(); }, 2000);
+    };
+
+    const loadPrefs = () => { try { return { ...DEFAULT_PREFS, ...(JSON.parse(localStorage.getItem(PREFS_KEY) || '{}')) }; } catch { return { ...DEFAULT_PREFS }; } };
+    const savePrefs = (p) => localStorage.setItem(PREFS_KEY, JSON.stringify(p));
+
+    /* ========== Same parsing as server for consistency ========== */
+    function subjectFromTitle(t) { const s = String(t); const m = s.match(/\b([A-Za-z]{2,6}-?\d{2,4})\b/); return m ? m[1].toUpperCase() : 'GENERAL'; }
+    function dateFromTitle(title) {
+      const s = String(title).replace(/[._-]+/g, ' ');
+      const months = {
+        jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11,
+        january: 0, february: 1, march: 2, april: 3, maylong: 4, june: 5, july: 6, august: 7, september: 8, october: 9, november: 10, december: 11
+      };
+      const monIdx = (m) => m.toLowerCase() === 'may' ? 4 : months[m.toLowerCase()];
+      const toISO = (y, m, d) => { const yr = (y.length === 2) ? (+y < 50 ? 2000 + +y : 1900 + +y) : +y; const dt = new Date(Date.UTC(yr, m, +d, 12)); return isNaN(dt) ? null : dt.toISOString(); };
+      let m = s.match(/\b(\d{1,2})\s*(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t|tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s*(\d{2,4})\b/i);
+      if (m) { const d = m[1], mon = monIdx(m[2]), y = m[3]; if (mon !== undefined) return toISO(y, mon, d); }
+      m = s.match(/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t|tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2}),?\s+(\d{2,4})\b/i);
+      if (m) { const mon = monIdx(m[1]), d = m[2], y = m[3]; if (mon !== undefined) return toISO(y, mon, d); }
+      m = s.match(/\b(20\d{2}|19\d{2})[.\-\/](\d{1,2})[.\-\/](\d{1,2})\b/);
+      if (m) { const y = m[1], mo = Math.max(0, Math.min(11, +m[2] - 1)), d = m[3]; return toISO(y, mo, d); }
+      m = s.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b/);
+      if (m) { const a = +m[1], b = +m[2], y = m[3]; let d, mo; if (a > 12) { d = a; mo = b - 1 } else if (b > 12) { d = b; mo = a - 1 } else { d = a; mo = b - 1 } if (mo >= 0 && mo <= 11) return toISO(String(y), mo, String(d)); }
+      return null;
+    }
+    function parseYouTubeId(u) { try { const url = new URL(u); if (url.hostname === 'youtu.be') return url.pathname.slice(1); const v = url.searchParams.get('v'); if (v) return v; const p = url.pathname.split('/').filter(Boolean); const i = p.findIndex(x => x === 'shorts' || x === 'embed'); if (i !== -1 && p[i + 1]) return p[i + 1]; if (url.searchParams.get('list') && !v) throw new Error('Playlist link detected.'); } catch { } return null; }
+
+    /* ========== Backend API ========== */
+    const API = {
+      async health() {
+        try {
+          const r = await fetch('/api/health');
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return await r.json();
+        } catch (e) {
+          throw new Error('Backend offline');
+        }
+      },
+      async list() {
+        try {
+          const r = await fetch('/api/videos');
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return await r.json();
+        } catch (e) {
+          throw new Error('Failed to load videos');
+        }
+      },
+      async addByUrl(url) {
+        try {
+          const r = await fetch('/api/videos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+          });
+          if (!r.ok) {
+            const errorData = await r.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errorData.error || `HTTP ${r.status}`);
+          }
+          return await r.json();
+        } catch (e) {
+          throw new Error(e.message || 'Failed to add video');
+        }
+      },
+      async addBulkUrls(urls) {
+        try {
+          const r = await fetch('/api/videos/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls })
+          });
+          if (!r.ok) {
+            const errorData = await r.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errorData.error || `HTTP ${r.status}`);
+          }
+          return await r.json();
+        } catch (e) {
+          throw new Error(e.message || 'Failed to add videos');
+        }
+      },
+      async remove(id) {
+        try {
+          const url = `/api/videos/${encodeURIComponent(id)}`;
+          console.log('DELETE request to:', url);
+
+          const r = await fetch(url, { method: 'DELETE' });
+
+          if (!r.ok) {
+            const errorText = await r.text();
+            console.error('Delete failed:', r.status, errorText);
+            throw new Error(`HTTP ${r.status}: ${errorText}`);
+          }
+
+          const result = await r.json();
+          console.log('Delete result:', result);
+          return result;
+        } catch (e) {
+          console.error('Delete error:', e);
+          throw new Error(`Failed to remove video: ${e.message}`);
+        }
+      },
+      async clear() {
+        try {
+          const r = await fetch('/api/videos', { method: 'DELETE' });
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return await r.json();
+        } catch (e) {
+          throw new Error('Failed to clear videos');
+        }
+      },
+      async export() {
+        try {
+          const r = await fetch('/api/export');
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return await r.json();
+        } catch (e) {
+          throw new Error('Failed to export data');
+        }
+      },
+      async importReplace(items) {
+        try {
+          const r = await fetch('/api/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items })
+          });
+          if (!r.ok) {
+            const errorData = await r.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errorData.error || `HTTP ${r.status}`);
+          }
+          return await r.json();
+        } catch (e) {
+          throw new Error(e.message || 'Failed to import data');
+        }
+      },
+      async merge(items) {
+        try {
+          const r = await fetch('/api/merge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items })
+          });
+          if (!r.ok) {
+            const errorData = await r.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errorData.error || `HTTP ${r.status}`);
+          }
+          return await r.json();
+        } catch (e) {
+          throw new Error(e.message || 'Failed to merge data');
+        }
+      },
+    };
+
+    /* ========== State ========== */
+    const state = { ...loadPrefs(), items: [], online: false };
+    const setConnBadge = () => {
+      const el = document.getElementById('connBadge');
+      el.innerHTML = state.online ? `<span class="ok">●</span> Connected` : `<span class="err">●</span> Offline`;
+    };
+
+    /* ========== UI bits ========== */
+    function countBySubject(items) { const map = new Map(); for (const v of items) { const s = v.subject || subjectFromTitle(v.title); map.set(s, (map.get(s) || 0) + 1) } return map }
+    function formatShortDate(d) { if (!d) return 'No date'; const dt = new Date(d); if (isNaN(dt)) return 'No date'; const mons = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']; return dt.getDate() + " " + mons[dt.getMonth()] + " " + dt.getFullYear() }
+    function renderRecentBanner(filtered) {
+      const banner = document.getElementById('recentBanner');
+      const candidates = filtered.filter(v => v.publishedAt).sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+      if (candidates.length) { const top = candidates[0]; banner.textContent = `Recent Uploaded Video: ${formatShortDate(top.publishedAt)} : ${top.title}`; }
+      else { banner.textContent = 'Recent Uploaded Video: —'; }
+    }
+    function makeVideoCard(v) {
+      const c = document.createElement('div'); c.className = 'video';
+      const thumb = document.createElement('div'); thumb.className = 'thumb';
+      const a = document.createElement('a'); a.href = v.url; a.target = '_blank'; a.rel = 'noopener';
+      const img = document.createElement('img'); img.src = v.thumbnail || ''; img.alt = v.title || 'Thumbnail'; img.loading = 'lazy';
+      a.appendChild(img); thumb.appendChild(a);
+      const info = document.createElement('div'); info.className = 'info';
+      const title = document.createElement('div'); title.className = 'titleline'; title.textContent = v.title || '(No title)';
+      const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = v.publishedAt ? new Date(v.publishedAt).toDateString() : 'No date';
+      const actions = document.createElement('div'); actions.className = 'actions';
+      const openBtn = document.createElement('button'); openBtn.textContent = 'Open'; openBtn.onclick = () => window.open(v.url, '_blank', 'noopener');
+      const rmBtn = document.createElement('button'); rmBtn.textContent = 'Remove'; rmBtn.className = 'danger';
+      rmBtn.onclick = async () => {
+        if (!state.online) {
+          toast('Backend offline - cannot remove videos');
+          return;
+        }
+
+        // Confirmation dialog
+        if (!confirm(`Are you sure you want to remove "${v.title || 'this video'}"?`)) {
+          return;
+        }
+
+        // Disable button during operation
+        rmBtn.disabled = true;
+        rmBtn.textContent = 'Removing...';
+
+        try {
+          const result = await API.remove(v.id);
+          await loadAndRender();
+          if (result.removed) {
+            toast('Video removed successfully');
+          } else {
+            toast('Video not found or already removed');
+          }
+        } catch (e) {
+          console.error('Delete error:', e);
+          toast(`Remove failed: ${e.message || 'Unknown error'}`);
+        } finally {
+          rmBtn.disabled = false;
+          rmBtn.textContent = 'Remove';
+        }
+      };
+      actions.append(openBtn, rmBtn); info.append(title, meta, actions); c.append(thumb, info); return c;
+    }
+    function renderTabs(items) {
+      const tabs = document.getElementById('tabs');
+      const counts = countBySubject(items);
+      const allCount = items.length;
+      const subs = ['ALL', ...Array.from(counts.keys()).sort()];
+      tabs.innerHTML = '';
+      for (const s of subs) {
+        const count = s === 'ALL' ? allCount : (counts.get(s) || 0);
+        const b = document.createElement('button');
+        b.className = 'tab' + (state.currentSubject === s ? ' active' : '');
+        b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-pressed', state.currentSubject === s ? 'true' : 'false');
+        b.textContent = (s === 'ALL' ? 'All' : s) + ` (${count})`;
+        b.onclick = () => { state.currentSubject = s; savePrefs(state); renderList(items) };
+        tabs.appendChild(b);
+      }
+    }
+    function getSortFieldAndDir() {
+      const sel = document.getElementById('sortSelect'); const val = sel.value || state.sort; const [field, dir] = val.split('-'); return { field, dir };
+    }
+    function renderList(allItems) {
+      const list = document.getElementById('list'); const empty = document.getElementById('empty'); const { field, dir } = getSortFieldAndDir();
+      const filtered = allItems.filter(v => state.currentSubject === 'ALL' || (v.subject || subjectFromTitle(v.title)) === state.currentSubject);
+      renderRecentBanner(filtered);
+      const arr = [...filtered].sort((a, b) => { const va = a[field] ? +new Date(a[field]) : 0; const vb = b[field] ? +new Date(b[field]) : 0; if (va === vb) { const t = String(a.title || '').localeCompare(String(b.title || '')); return t !== 0 ? t : String(a.id).localeCompare(String(b.id)); } return dir === 'desc' ? vb - va : va - vb; });
+      list.innerHTML = ''; if (!arr.length) { empty.style.display = 'block'; return } else empty.style.display = 'none';
+      for (const v of arr) list.appendChild(makeVideoCard(v));
+
+      // Update add button state
+      const addBtn = document.getElementById('addBtn');
+      const bulkBtn = document.getElementById('bulkAddBtn');
+
+      addBtn.disabled = !state.online;
+      bulkBtn.disabled = !state.online;
+
+      if (!state.online) {
+        addBtn.textContent = 'Offline';
+        bulkBtn.textContent = 'Offline';
+      } else {
+        addBtn.textContent = 'Add';
+        bulkBtn.textContent = 'Add All';
+      }
+    }
+
+    /* ========== Local Storage Fallback ========== */
+    const LOCAL_STORE_KEY = 'pendingClasses.local.v3';
+
+    const LocalStore = {
+      list: () => JSON.parse(localStorage.getItem(LOCAL_STORE_KEY) || '[]'),
+      addByUrl: async (url) => {
+        const id = parseYouTubeId(url);
+        if (!id) throw new Error('Invalid YouTube link');
+
+        // Use oEmbed as fallback
+        const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+        if (!r.ok) throw new Error('oEmbed error');
+        const d = await r.json();
+
+        const v = {
+          id,
+          title: d.title || 'Untitled',
+          thumbnail: d.thumbnail_url || '',
+          publishedAt: dateFromTitle(d.title),
+          url: `https://www.youtube.com/watch?v=${id}`,
+          subject: subjectFromTitle(d.title),
+          addedAt: new Date().toISOString()
+        };
+
+        const cur = LocalStore.list().filter(x => x.id !== id).concat([v]);
+        localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify(cur));
+        return v;
+      },
+      remove: (id) => {
+        const cur = LocalStore.list().filter(x => x.id !== id);
+        localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify(cur));
+      },
+      clear: () => localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify([])),
+      export: () => LocalStore.list(),
+      importReplace: (items) => localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify(items)),
+      merge: (items) => {
+        const cur = LocalStore.list();
+        const byId = new Map(cur.map(x => [x.id, x]));
+        items.forEach(it => { if (it && it.id && it.url) byId.set(it.id, it); });
+        localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify(Array.from(byId.values())));
+      }
+    };
+
+    /* ========== Data IO ========== */
+    async function loadAndRender() {
+      try {
+        state.items = await API.list();
+        state.online = true;
+        setConnBadge();
+      } catch (e) {
+        state.online = false;
+        state.items = [];
+        setConnBadge();
+        toast('Backend offline - please check your connection');
+      }
+
+      renderTabs(state.items);
+      renderList(state.items);
+      updateExportBox();
+    }
+
+    function updateExportBox() {
+      const box = document.getElementById('exportBox');
+      box.value = JSON.stringify(state.items, null, 2);
+    }
+
+    /* ========== Events ========== */
+    document.getElementById('addBtn').onclick = async () => {
+      const urlInput = document.getElementById('url'); const addBtn = document.getElementById('addBtn');
+      const raw = urlInput.value.trim(); if (!raw) { toast('Paste a YouTube link'); urlInput.focus(); return; }
+
+      if (!state.online) {
+        toast('Backend offline - cannot add videos');
+        return;
+      }
+
+      addBtn.disabled = true; addBtn.textContent = 'Adding…';
+      try {
+        await API.addByUrl(raw);
+        await loadAndRender();
+        urlInput.value = ''; // Clear input field
+        urlInput.focus();
+        toast('Added');
+      } catch (e) {
+        toast(e?.message || 'Add failed');
+      } finally {
+        addBtn.disabled = false; addBtn.textContent = 'Add';
+      }
+    };
+
+    document.getElementById('url').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addBtn').click(); } });
+
+    // Bulk upload functionality
+    document.getElementById('bulkAddBtn').onclick = async () => {
+      const bulkInput = document.getElementById('bulkUrls');
+      const bulkBtn = document.getElementById('bulkAddBtn');
+      const urls = bulkInput.value.trim().split('\n').filter(url => url.trim());
+
+      if (!urls.length) {
+        toast('Please enter at least one YouTube URL');
+        return;
+      }
+
+      if (!state.online) {
+        toast('Backend offline - cannot add videos');
+        return;
+      }
+
+      bulkBtn.disabled = true;
+      bulkBtn.textContent = 'Adding...';
+
+      try {
+        const result = await API.addBulkUrls(urls);
+        await loadAndRender();
+        bulkInput.value = '';
+        toast(`Added ${result.added} videos${result.errors > 0 ? `, ${result.errors} failed` : ''}`);
+      } catch (e) {
+        toast(e?.message || 'Bulk add failed');
+      } finally {
+        bulkBtn.disabled = false;
+        bulkBtn.textContent = 'Add All';
+      }
+    };
+
+    document.getElementById('clearBulkBtn').onclick = () => {
+      document.getElementById('bulkUrls').value = '';
+    };
+
+    document.getElementById('sortSelect').onchange = (e) => { state.sort = e.target.value; savePrefs(state); renderList(state.items); };
+    document.getElementById('refreshBtn').onclick = () => { updateExportBox(); toast('Refreshed'); };
+    document.getElementById('copyBtn').onclick = async () => { updateExportBox(); const txt = document.getElementById('exportBox').value; try { await navigator.clipboard.writeText(txt); toast('Copied'); } catch { const ta = document.getElementById('exportBox'); ta.select(); document.execCommand && document.execCommand('copy'); toast('Copied'); } };
+    document.getElementById('importBtn').onclick = async () => {
+      try {
+        const inputValue = document.getElementById('importBox').value.trim();
+        if (!inputValue) {
+          toast('Please paste JSON data first');
+          return;
+        }
+
+        const d = JSON.parse(inputValue);
+        if (!Array.isArray(d)) {
+          toast('JSON must be an array of video objects');
+          return;
+        }
+
+        if (!d.every(x => x && typeof x.id === 'string' && typeof x.url === 'string')) {
+          toast('Each video must have id and url fields');
+          return;
+        }
+
+        if (!state.online) {
+          toast('Backend offline - cannot import data');
+          return;
+        }
+
+        await API.importReplace(d);
+        await loadAndRender();
+        updateExportBox();
+        toast('Imported (replaced)');
+      } catch (e) {
+        if (e.name === 'SyntaxError') {
+          toast('Invalid JSON format');
+        } else {
+          toast(e.message || 'Import failed');
+        }
+      }
+    };
+
+    document.getElementById('mergeBtn').onclick = async () => {
+      try {
+        const inputValue = document.getElementById('importBox').value.trim();
+        if (!inputValue) {
+          toast('Please paste JSON data first');
+          return;
+        }
+
+        const d = JSON.parse(inputValue);
+        if (!Array.isArray(d)) {
+          toast('JSON must be an array of video objects');
+          return;
+        }
+
+        if (!d.every(x => x && typeof x.id === 'string' && typeof x.url === 'string')) {
+          toast('Each video must have id and url fields');
+          return;
+        }
+
+        if (!state.online) {
+          toast('Backend offline - cannot merge data');
+          return;
+        }
+
+        await API.merge(d);
+        await loadAndRender();
+        updateExportBox();
+        toast('Merged');
+      } catch (e) {
+        if (e.name === 'SyntaxError') {
+          toast('Invalid JSON format');
+        } else {
+          toast(e.message || 'Merge failed');
+        }
+      }
+    };
+    document.getElementById('clearBtn').onclick = async () => {
+      if (!confirm('Clear all?')) return;
+
+      if (!state.online) {
+        toast('Backend offline - cannot clear data');
+        return;
+      }
+
+      try {
+        await API.clear();
+        await loadAndRender();
+        updateExportBox();
+        toast('Cleared');
+      }
+      catch { toast('Clear failed'); }
+    };
+
+    /* ========== Init ========== */
+    (async function init() {
+      // Prefill sort
+      document.getElementById('sortSelect').value = loadPrefs().sort || 'publishedAt-desc';
+
+      // Always try backend first
+      try {
+        await API.health();
+        state.online = true;
+      } catch {
+        state.online = false;
+      }
+
+      setConnBadge();
+      await loadAndRender();
+      document.getElementById('url').focus();
+    })();
+  </script>
+</body>
+
+</html>
