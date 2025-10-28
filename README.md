@@ -1,130 +1,120 @@
-# 📚 Pending Classes Tracker
+# Pending Classes - Monolith Application
 
-A modern, full-stack web application for managing your pending YouTube lecture videos with automatic subject categorization and global backend synchronization.
+A full-stack application for managing YouTube video collections with React frontend and Express.js backend using MongoDB Atlas.
 
-## ✨ Features
-
-- 🎥 **YouTube Video Management** - Add videos by pasting YouTube links
-- 🏷️ **Auto Subject Detection** - Automatically categorizes videos by course codes (e.g., CSE210, DNS101)
-- 🔄 **Global Sync** - Backend API with Netlify Functions for data persistence
-- 📱 **Responsive Design** - Works on desktop and mobile
-- 🌐 **Universal Access** - Access your classes from anywhere, any device
-- 📊 **Smart Sorting** - Sort by upload date or added date
-- 💾 **Import/Export** - Backup and restore your data
-- 🎨 **Dark Theme** - Modern, easy-on-the-eyes interface
-
-## 🚀 Quick Start
-
-### Deploy to Netlify (Recommended)
-
-1. **Go to [netlify.com](https://netlify.com)** and sign up (free)
-2. **Deploy manually**: 
-   - Click "Add new site" → "Deploy manually"
-   - Drag and drop this entire project folder
-   - Click "Deploy site"
-3. **That's it!** Your app will be live with full backend functionality
-
-### Local Development
-
-1. **Clone this repository**
-2. **Serve the files** (any method):
-   ```bash
-   # Python
-   python3 -m http.server 8000
-   
-   # Node.js
-   npx serve .
-   
-   # Or just open index.html in your browser
-   ```
-3. **Open** `http://localhost:8000`
-
-## 🎯 How to Use
-
-1. **Add Videos**: Paste YouTube links in the input field
-2. **Organize**: Videos are automatically categorized by subject
-3. **Filter**: Click subject tabs to filter videos
-4. **Sort**: Use the dropdown to change sorting
-5. **Access Anywhere**: Your classes sync globally - access from any device
-6. **Backup**: Use Import/Export for data backup
-
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 pending-classes-netlify/
-├── index.html              # Main application (single file)
-├── netlify/
-│   └── functions/          # Backend API (Netlify Functions)
-│       ├── health.js       # Health check
-│       ├── videos.js       # Video CRUD operations
-│       ├── videos-id.js    # Individual video operations
-│       ├── add.js          # Add video function
-│       ├── list.js         # List videos function
-│       ├── remove.js       # Remove video function
-│       ├── export.js       # Export data function
-│       ├── import.js       # Import data function
-│       └── merge.js        # Merge data function
-├── netlify.toml           # Netlify configuration
-└── README.md              # This file
+├── frontend/          # React + Vite frontend
+│   ├── src/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   └── utils/
+│   └── package.json
+├── server/            # Express.js + MongoDB backend
+│   ├── models/
+│   ├── routes/
+│   ├── utils/
+│   └── package.json
+└── package.json       # Root package.json for monolith management
 ```
 
-## 🔧 API Endpoints
+## Getting MongoDB Atlas Credentials
+
+### Step 1: Create MongoDB Atlas Account
+1. Go to [MongoDB Atlas](https://www.mongodb.com/atlas)
+2. Sign up for a free account
+3. Create a new cluster (choose the free M0 tier)
+
+### Step 2: Set Up Database Access
+1. In Atlas dashboard, go to "Database Access"
+2. Click "Add New Database User"
+3. Choose "Password" authentication
+4. Create a username and password (save these!)
+5. Set privileges to "Read and write to any database"
+
+### Step 3: Set Up Network Access
+1. Go to "Network Access"
+2. Click "Add IP Address"
+3. Choose "Allow access from anywhere" (0.0.0.0/0) for development
+4. Or add your specific IP address
+
+### Step 4: Get Connection String
+1. Go to "Clusters" and click "Connect"
+2. Choose "Connect your application"
+3. Select "Node.js" and version 4.1 or later
+4. Copy the connection string
+5. Replace `<password>` with your database user password
+6. Replace `<dbname>` with your database name (e.g., "pending-classes")
+
+### Step 5: Set Environment Variables
+1. Copy `server/env.example` to `server/.env`
+2. Replace the MONGODB_URI with your actual connection string:
+
+```env
+MONGODB_URI=mongodb+srv://yourusername:yourpassword@yourcluster.mongodb.net/pending-classes?retryWrites=true&w=majority
+```
+
+## Development Setup
+
+### Install Dependencies
+```bash
+# Install root dependencies
+npm install
+
+# Install all dependencies (frontend + backend)
+npm run install:all
+```
+
+### Start Development Servers
+```bash
+# Start both frontend and backend concurrently
+npm run dev
+
+# Or start individually:
+npm run dev:frontend  # Frontend on http://localhost:3000
+npm run dev:backend   # Backend on http://localhost:5000
+```
+
+## Environment Variables
+
+Create `server/.env` with:
+```env
+MONGODB_URI=your_mongodb_atlas_connection_string
+PORT=5000
+NODE_ENV=development
+```
+
+## API Endpoints
 
 - `GET /api/health` - Health check
-- `GET /api/videos` - List videos
-- `POST /api/videos` - Add video
-- `DELETE /api/videos/:id` - Remove video
-- `GET /api/export` - Export data
-- `POST /api/import` - Import data
-- `POST /api/merge` - Merge data
+- `GET /api/videos` - Get all videos
+- `POST /api/videos` - Add single video
+- `POST /api/videos/bulk` - Add multiple videos
+- `DELETE /api/videos/:id` - Delete specific video
+- `DELETE /api/videos` - Clear all videos
+- `GET /api/export` - Export all videos
+- `POST /api/import` - Import videos (replace all)
+- `POST /api/merge` - Merge videos (upsert)
 
-## 🎨 Customization
+## Deployment
 
-### Subject Detection
-The app automatically detects course codes from video titles using patterns like:
-- `CSE210`, `DNS101`, `MATH301`
-- `2514-DNS101-Module14-25August25` → `DNS101`
+The application is configured for Vercel deployment with both frontend and backend in a single repository.
 
-### Global Access
-Your classes are stored globally and accessible from anywhere:
-- No login required
-- Access from any device
-- Real-time synchronization
-- Universal sharing
+### Vercel Configuration
+- Frontend builds to `frontend/dist`
+- Backend runs as serverless functions
+- MongoDB Atlas handles database persistence
 
-## 🛠️ Technical Details
+## Features
 
-- **Frontend**: Pure HTML/CSS/JavaScript (no frameworks)
-- **Backend**: Netlify Functions (serverless)
-- **Database**: Netlify Blobs (key-value storage)
-- **Deployment**: Netlify (automatic HTTPS, CDN)
-- **YouTube API**: Uses oEmbed (no API key required)
-
-## 📱 Browser Support
-
-- Chrome/Edge (recommended)
-- Firefox
-- Safari
-- Mobile browsers
-
-## 🔒 Privacy
-
-- All data stored in Netlify Blobs
-- No external tracking
-- YouTube data fetched via oEmbed API
-- Global data is public (anyone with the link can access)
-
-## 🆘 Troubleshooting
-
-- **404 Error**: Make sure `index.html` is in the root directory
-- **Functions not working**: Check Netlify Functions tab for errors
-- **Data not saving**: Ensure Netlify Blobs is enabled
-- **YouTube links not working**: The app uses oEmbed (no API key needed)
-
-## 📄 License
-
-MIT License - feel free to use and modify!
-
----
-
-**Made with ❤️ for students and lifelong learners**
+- ✅ Add YouTube videos by URL
+- ✅ Bulk upload multiple videos
+- ✅ Subject-based filtering
+- ✅ Sort by upload date or added date
+- ✅ Export/Import functionality
+- ✅ Merge data from multiple sources
+- ✅ Responsive dark theme UI
+- ✅ Real-time connection status
+- ✅ MongoDB Atlas persistence

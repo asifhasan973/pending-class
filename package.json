@@ -1,29 +1,28 @@
 {
-    "name": "pending-classes-backend",
+    "name": "pending-classes-monolith",
     "version": "1.0.0",
-    "description": "Backend for Pending Classes application",
-    "main": "server.js",
+    "description": "Pending Classes application with React frontend and Express backend",
+    "main": "server/index.js",
     "scripts": {
-        "start": "node server.js",
-        "dev": "nodemon server.js",
-        "build": "echo 'No build step required'",
-        "test": "echo 'No tests specified'",
-        "deploy": "./deploy.sh",
-        "deploy:vercel": "vercel --prod",
-        "deploy:heroku": "git push heroku main"
-    },
-    "dependencies": {
-        "express": "^4.18.2",
-        "cors": "^2.8.5",
-        "body-parser": "^1.20.2"
+        "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+        "dev:frontend": "cd frontend && npm run dev",
+        "dev:backend": "cd server && npm run dev",
+        "build": "npm run build:frontend && npm run build:backend",
+        "build:frontend": "cd frontend && npm run build",
+        "build:backend": "cd server && npm run build",
+        "start": "cd server && npm start",
+        "install:all": "npm install && cd frontend && npm install && cd ../server && npm install"
     },
     "devDependencies": {
-        "nodemon": "^3.0.1"
+        "concurrently": "^8.2.2"
     },
     "keywords": [
         "youtube",
         "videos",
-        "pending-classes"
+        "pending-classes",
+        "react",
+        "express",
+        "mongodb"
     ],
     "author": "Your Name",
     "license": "MIT"
