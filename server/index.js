@@ -2,8 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 import videoRoutes from './routes/videos.js';
 import dataRoutes from './routes/data.js';
@@ -12,11 +10,6 @@ import dataRoutes from './routes/data.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Get __dirname equivalent for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Middleware
 app.use(cors({
@@ -48,18 +41,16 @@ const connectDB = async (retries = 5) => {
         }
         
         console.error('❌ Failed to connect to MongoDB after multiple attempts');
-        // Don't exit, let the server run without DB (return errors for DB operations)
     }
 };
 
-// Handle MongoDB connection errors after initial connection
+// Handle MongoDB connection errors
 mongoose.connection.on('error', (err) => {
     console.error('MongoDB connection error:', err);
 });
 
 mongoose.connection.on('disconnected', () => {
-    console.log('⚠️ MongoDB disconnected. Attempting to reconnect...');
-    connectDB();
+    console.log('⚠️ MongoDB disconnected');
 });
 
 mongoose.connection.on('connected', () => {
@@ -73,7 +64,7 @@ connectDB();
 app.use('/api/videos', videoRoutes);
 app.use('/api', dataRoutes);
 
-// Health check endpoint (works even if DB is down)
+// Health check endpoint
 app.get('/api/health', (req, res) => {
     const dbStatus = mongoose.connection.readyState;
     const dbStatusText = {
@@ -91,7 +82,7 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Root endpoint - API info
+// Root endpoint
 app.get('/', (req, res) => {
     res.json({
         message: 'Pending Classes API',
@@ -105,7 +96,7 @@ app.get('/', (req, res) => {
     });
 });
 
-// 404 handler for undefined routes
+// 404 handler
 app.use((req, res) => {
     res.status(404).json({ 
         error: 'Not Found',
@@ -123,52 +114,14 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start server (even if DB connection fails)
-const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
-
-// Handle server errors
-server.on('error', (err) => {
-    console.error('Server error:', err);
-});
-
-// Graceful shutdown
-const gracefulShutdown = async (signal) => {
-    console.log(`\n🛑 ${signal} received, shutting down gracefully...`);
-    
-    // Stop accepting new connections
-    server.close(async () => {
-        console.log('✅ Server closed');
-        
-        // Close database connection
-        try {
-            await mongoose.connection.close();
-            console.log('✅ Database connection closed');
-        } catch (err) {
-            console.error('Error closing database:', err);
-        }
-        
-        process.exit(0);
+// For local development only
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+        console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     });
-    
-    // Force shutdown after 30 seconds
-    setTimeout(() => {
-        console.error('⚠️ Forced shutdown after timeout');
-        process.exit(1);
-    }, 30000);
-};
+}
 
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
-    gracefulShutdown('uncaughtException');
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-});
+// Export for Vercel serverless
+export default app;
