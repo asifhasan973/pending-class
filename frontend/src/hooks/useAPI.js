@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { parseYouTubeId, subjectFromTitle, dateFromTitle } from '../utils/youtubeUtils';
 
-const API_BASE = '/api';
+// Use backend URL based on environment
+const API_BASE = import.meta.env.PROD 
+    ? 'https://pending-classes.vercel.app/api'
+    : '/api';
 
 export function useAPI() {
     const [videos, setVideos] = useState([]);
