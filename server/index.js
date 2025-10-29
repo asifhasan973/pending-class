@@ -58,13 +58,15 @@ app.get('/api/health', (req, res) => {
 app.use(express.static(path.join(__dirname, '..')));
 
 // Serve frontend for all non-API routes
-app.get('*', (req, res) => {
+// Serve frontend for all non-API routes
+app.get('/*', (req, res) => {
     // Skip API routes
     if (req.path.startsWith('/api/')) {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
     res.sendFile(path.join(__dirname, '../index.html'));
 });
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
