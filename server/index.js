@@ -20,31 +20,51 @@ const __dirname = path.dirname(__filename);
 
 // Middleware
 app.use(cors({
-    origin: process.env.FRONTEND_URL || [
-        'http://localhost:5173',
-        'http://localhost:3000',
-        'https://your-frontend-domain.netlify.app',
-        'https://your-frontend-domain.vercel.app'
-    ],
+    origin: '*',
     credentials: true
 }));
 app.use(express.json());
 
-// MongoDB connection
-const connectDB = async () => {
+// MongoDB connection with retry logic
+const connectDB = async (retries = 5) => {
     try {
         const mongoURI = process.env.MONGODB_URI;
         if (!mongoURI) {
             throw new Error('MONGODB_URI environment variable is not set');
         }
 
-        await mongoose.connect(mongoURI);
+        await mongoose.connect(mongoURI, {
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+        });
         console.log('✅ Connected to MongoDB Atlas');
     } catch (error) {
-        console.error('❌ MongoDB connection error:', error.message);
-        process.exit(1);
+        console.error(`❌ MongoDB connection error (${retries} retries left):`, error.message);
+        
+        if (retries > 0) {
+            console.log('⏳ Retrying in 5 seconds...');
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            return connectDB(retries - 1);
+        }
+        
+        console.error('❌ Failed to connect to MongoDB after multiple attempts');
+        // Don't exit, let the server run without DB (return errors for DB operations)
     }
 };
+
+// Handle MongoDB connection errors after initial connection
+mongoose.connection.on('error', (err) => {
+    console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('⚠️ MongoDB disconnected. Attempting to reconnect...');
+    connectDB();
+});
+
+mongoose.connection.on('connected', () => {
+    console.log('✅ MongoDB reconnected');
+});
 
 // Connect to database
 connectDB();
@@ -53,12 +73,20 @@ connectDB();
 app.use('/api/videos', videoRoutes);
 app.use('/api', dataRoutes);
 
-// Health check endpoint
+// Health check endpoint (works even if DB is down)
 app.get('/api/health', (req, res) => {
-    res.json({
-        ok: true,
+    const dbStatus = mongoose.connection.readyState;
+    const dbStatusText = {
+        0: 'disconnected',
+        1: 'connected',
+        2: 'connecting',
+        3: 'disconnecting'
+    };
+
+    res.status(dbStatus === 1 ? 200 : 503).json({
+        ok: dbStatus === 1,
         timestamp: new Date().toISOString(),
-        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        database: dbStatusText[dbStatus] || 'unknown',
         environment: process.env.NODE_ENV || 'development'
     });
 });
@@ -95,24 +123,52 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
+// Start server (even if DB connection fails)
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📊 Database: ${mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-    console.log('\n🛑 Shutting down server...');
-    await mongoose.connection.close();
-    console.log('✅ Database connection closed');
-    process.exit(0);
+// Handle server errors
+server.on('error', (err) => {
+    console.error('Server error:', err);
 });
 
-process.on('SIGTERM', async () => {
-    console.log('\n🛑 SIGTERM received, shutting down gracefully...');
-    await mongoose.connection.close();
-    console.log('✅ Database connection closed');
-    process.exit(0);
+// Graceful shutdown
+const gracefulShutdown = async (signal) => {
+    console.log(`\n🛑 ${signal} received, shutting down gracefully...`);
+    
+    // Stop accepting new connections
+    server.close(async () => {
+        console.log('✅ Server closed');
+        
+        // Close database connection
+        try {
+            await mongoose.connection.close();
+            console.log('✅ Database connection closed');
+        } catch (err) {
+            console.error('Error closing database:', err);
+        }
+        
+        process.exit(0);
+    });
+    
+    // Force shutdown after 30 seconds
+    setTimeout(() => {
+        console.error('⚠️ Forced shutdown after timeout');
+        process.exit(1);
+    }, 30000);
+};
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    gracefulShutdown('uncaughtException');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
