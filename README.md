@@ -1,113 +1,75 @@
-# Pending Classes - Monolith Application
+# Pending Classes
 
 A full-stack application for managing YouTube video collections with React frontend and Express.js backend using MongoDB Atlas.
 
-## Project Structure
+## 🚀 Quick Start
+
+```bash
+# Install all dependencies
+npm run install:all
+
+# Start development servers (frontend + backend)
+npm run dev
+```
+
+- **Frontend**: http://localhost:3000
+- **Backend**: http://localhost:5000
+
+## 📁 Project Structure
 
 ```
 pending-classes-netlify/
 ├── frontend/          # React + Vite frontend
 │   ├── src/
-│   │   ├── components/
-│   │   ├── hooks/
-│   │   └── utils/
+│   │   ├── components/    # UI components (Toast, VideoCard)
+│   │   ├── hooks/         # Custom hooks (useAPI)
+│   │   └── utils/         # YouTube utilities
+│   ├── index.html
 │   └── package.json
 ├── server/            # Express.js + MongoDB backend
-│   ├── models/
-│   ├── routes/
-│   ├── utils/
-│   └── package.json
-└── package.json       # Root package.json for monolith management
+│   ├── models/            # Mongoose schemas
+│   ├── routes/            # API routes
+│   └── utils/             # Server utilities
+├── api/               # Vercel serverless function
+└── package.json       # Monorepo scripts
 ```
 
-## Getting MongoDB Atlas Credentials
+## 🔧 Environment Setup
 
-### Step 1: Create MongoDB Atlas Account
-1. Go to [MongoDB Atlas](https://www.mongodb.com/atlas)
-2. Sign up for a free account
-3. Create a new cluster (choose the free M0 tier)
+### MongoDB Atlas
 
-### Step 2: Set Up Database Access
-1. In Atlas dashboard, go to "Database Access"
-2. Click "Add New Database User"
-3. Choose "Password" authentication
-4. Create a username and password (save these!)
-5. Set privileges to "Read and write to any database"
+1. Create a free account at [MongoDB Atlas](https://www.mongodb.com/atlas)
+2. Create a cluster and set up a database user
+3. Allow network access (0.0.0.0/0 for development)
+4. Get your connection string
 
-### Step 3: Set Up Network Access
-1. Go to "Network Access"
-2. Click "Add IP Address"
-3. Choose "Allow access from anywhere" (0.0.0.0/0) for development
-4. Or add your specific IP address
+### Configure Environment
 
-### Step 4: Get Connection String
-1. Go to "Clusters" and click "Connect"
-2. Choose "Connect your application"
-3. Select "Node.js" and version 4.1 or later
-4. Copy the connection string
-5. Replace `<password>` with your database user password
-6. Replace `<dbname>` with your database name (e.g., "pending-classes")
-
-### Step 5: Set Environment Variables
-1. Copy `server/env.example` to `server/.env`
-2. Replace the MONGODB_URI with your actual connection string:
-
-```env
-MONGODB_URI=mongodb+srv://yourusername:yourpassword@yourcluster.mongodb.net/pending-classes?retryWrites=true&w=majority
-```
-
-## Development Setup
-
-### Install Dependencies
 ```bash
-# Install root dependencies
-npm install
+# Copy the example file
+cp server/.env.example server/.env
 
-# Install all dependencies (frontend + backend)
-npm run install:all
-```
-
-### Start Development Servers
-```bash
-# Start both frontend and backend concurrently
-npm run dev
-
-# Or start individually:
-npm run dev:frontend  # Frontend on http://localhost:3000
-npm run dev:backend   # Backend on http://localhost:5000
-```
-
-## Environment Variables
-
-Create `server/.env` with:
-```env
-MONGODB_URI=your_mongodb_atlas_connection_string
+# Edit with your MongoDB URI
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/pending-classes
 PORT=5000
 NODE_ENV=development
 ```
 
-## API Endpoints
+## 📡 API Endpoints
 
-- `GET /api/health` - Health check
-- `GET /api/videos` - Get all videos
-- `POST /api/videos` - Add single video
-- `POST /api/videos/bulk` - Add multiple videos
-- `DELETE /api/videos/:id` - Delete specific video
-- `DELETE /api/videos` - Clear all videos
-- `GET /api/export` - Export all videos
-- `POST /api/import` - Import videos (replace all)
-- `POST /api/merge` - Merge videos (upsert)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health` | Health check |
+| GET | `/api/videos` | Get all videos |
+| POST | `/api/videos` | Add single video |
+| POST | `/api/videos/bulk` | Add multiple videos |
+| DELETE | `/api/videos/:id` | Delete specific video |
+| DELETE | `/api/videos` | Clear all videos |
+| GET | `/api/export` | Export all videos |
+| POST | `/api/import` | Import videos (replace all) |
+| POST | `/api/merge` | Merge videos (upsert) |
 
-## Deployment
-
-The application is configured for Vercel deployment with both frontend and backend in a single repository.
-
-### Vercel Configuration
-- Frontend builds to `frontend/dist`
-- Backend runs as serverless functions
-- MongoDB Atlas handles database persistence
-
-## Features
+## ✨ Features
 
 - ✅ Add YouTube videos by URL
 - ✅ Bulk upload multiple videos
@@ -117,4 +79,28 @@ The application is configured for Vercel deployment with both frontend and backe
 - ✅ Merge data from multiple sources
 - ✅ Responsive dark theme UI
 - ✅ Real-time connection status
-- ✅ MongoDB Atlas persistence
+
+## 🚀 Deployment (Vercel)
+
+The app is configured for Vercel deployment:
+
+```bash
+# Deploy to Vercel
+vercel --prod
+```
+
+Set `MONGODB_URI` in Vercel environment variables.
+
+## 📝 Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start both frontend and backend |
+| `npm run dev:frontend` | Start frontend only |
+| `npm run dev:backend` | Start backend only |
+| `npm run build` | Build for production |
+| `npm run install:all` | Install all dependencies |
+
+## 📄 License
+
+MIT
